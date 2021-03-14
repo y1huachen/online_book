@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: htmlhead(~{::title},~{::style})">
+    <style>
+        .layui-table th {
+            text-align: center;
+        }
+        .layui-table-cell {
+            height: auto!important;
+        }
+        .layui-input-block {
+            position: relative;
+        }
+
+        .word {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: #aaa;
+            font-size: 12px;
+        }
+    </style>
+    <title>留言管理</title>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <!--头-->
+    <div th:replace="admin/fragments/head :: header"></div>
+    <div class="layui-body">
+        <div class="layui-row" style="margin: 1%">
+            <div class="layui-col-md4">
+                <div class="layui-btn-container">
+                    <button type="button" class="layui-btn layui-btn-radius" id="btn-add">添加留言</button>
+                    <button type="button" class="layui-btn layui-btn-radius" id="btn-resize">重置表格</button>
+                </div>
+            </div>
+        </div>
+        <table id="commentList" lay-filter="comment"></table>
+    </div>
+    <!--底部-->
+    <div th:replace="admin/fragments/footer :: footer"></div>
+</div>
+<div id="addComment" style="display: none">
+    <form class="layui-form layui-form-pane" action="" style="margin:20px" method="post">
+        <div class="layui-form-item layui-form-text" style="margin-right: 10px">
+            <label class="layui-form-label">留言</label>
+            <div class="layui-input-block">
+                    <textarea name="content" placeholder="请输入留言" class="layui-textarea" rows="10"
+                              oninput="wordLeg(this);" maxlength="500" id="content"></textarea>
+                <div class="word">
+                    <span class="text_count" id="numCount">0</span>
+                    &nbsp;/&nbsp;
+                    <span class="num_count">500</span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="reply" style="display: none">
+    <div style="margin: 20px">
+        <blockquote class="layui-elem-quote layui-quote-nm" id="show">引用区域的文字</blockquote>
+    </div>
+    <form class="layui-form layui-form-pane" action="" style="margin:20px" method="post">
+        <div class="layui-form-item layui-form-text" style="margin-right: 10px">
+            <label class="layui-form-label">回复留言</label>
+            <div class="layui-input-block">
+                    <textarea name="content" placeholder="请输入回复" class="layui-textarea" rows="10"
+                              oninput="wordLeg(this);" maxlength="500" id="replyContent"></textarea>
+                <div class="word">
+                    <span class="text_count" id="numCount1">0</span>
+                    &nbsp;/&nbsp;
+                    <span class="num_count">500</span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script type="text/html" id="barComment">
+    <a class="layui-btn layui-btn-xs" lay-event="reply">回复</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="ignore">忽略</a>
+</script>
+<script>
+    layui.use(['table', 'form'], function () {
+        var table = layui.table,
+            $ = layui.jquery;
+
+        var adminId = [[${session.admin.id}]];
+
+        //监听工具条
+        table.on('tool(comment)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+
+            if(layEvent === 'reply'){ // 回复
+                $("#show").text(data.content);
+                //do somehing
+                layer.open({
+                    type: 1,
+                    title: '回复留言',
+                    maxmin: true,
+                    area: ['720px'],
+                    shadeClose: false, //点击遮罩关闭
+                    content: $('#reply'),
+                    btn: ['清空', '立即回复'], //可以无限个按钮
+                    btn1: function (index, layero) {
+                        $("#replyContent").val("");
+                        $("#numCount1").text("0");
+                    },
+                    btn2: function (index, layero) { // 添加章节
+                        var content = $("#replyContent").val();
+                        var lens = $("#replyContent").val().length;
+                        if (lens == 0) {
+                            layer.msg('回复内容不能为空！');
+                            return false;
+                        }
+                        layer.confirm('确定回复吗？', {icon: 3, title: '提示'}, function (index) {
+                            //do something
+                            layer.msg("确定");
+                            $.ajax({
+                                url: '/admin/comment/reply',
+                                type: 'POST',
+                                dataType: 'json',
+                                data: {id:data.id,replyContent:content,isReply:1,admin:adminId},
+                                success: function (data) {
+                                    console.log(data);
+                                    if (data.code == 0) {
+                                        layer.closeAll('loading');
+                                        layer.load(2);
+                                        layer.msg(data.msg, {icon: 6});
+                                        setTimeout(function () {
+                                            window.parent.location.reload();//修改成功后刷新父界面
+                                        }, 1000);
+                                        //加载层-风格
+                                    } else {
+                                        layer.msg(data.msg, {icon: 5});
+                                    }
+                                }
+                            });
+                            layer.close(index);
+                        });
+                        return false;
+                    }
+                });
+            } else if(layEvent === 'ignore'){ // 忽略
+                layer.confirm('真的忽略['+data.user.username + "]的留言吗？", function(index){
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    ignoreComment(data.id);
+                });
+            }else if(layEvent === 'LAYTABLE_TIPS'){
+                layer.alert('Hi，头部工具栏扩展的右侧图标。');
+            }
+        });
+
+        // 忽略留言
+        function ignoreComment(commentId){
+            $.ajax({
+                url:'/admin/comment/reply',
+                type:'POST',
+                dataType:'json',
+                data: {id:commentId,replyContent:"",isReply:2,admin:adminId},
+                success:function (data) {
+                    console.log(data);
+                    layer.msg("忽略留言成功");
+                }
+            })
+        }
+
+        //添加留言
+        $('#btn-add').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '添加留言',
+                maxmin: true,
+                area: ['800px','400px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#addComment'),
+                btn: ['清空', '立即留言'], //可以无限个按钮
+                btn1: function (index, layero) {
+                    $("#content").val("");
+                    $("#numCount").text("0");
+                },
+                btn2: function (index, layero) { // 添加章节
+                    var content = $("#content").val();
+                    var lens = $("#content").val().length;
+                    if (lens == 0) {
+                        layer.msg('留言内容不能为空！');
+                        return false;
+                    }
+                    layer.confirm('确定留言吗？', {icon: 3, title: '提示'}, function (index) {
+                        //do something
+                        layer.msg("确定");
+                        $.ajax({
+                            url: '/comment/add',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {novel: 1, user: 1, content: content},
+                            success: function (data) {
+                                console.log(data);
+                                if (data.code == 0) {
+                                    layer.closeAll('loading');
+                                    layer.load(2);
+                                    layer.msg(data.msg, {icon: 6});
+                                    setTimeout(function () {
+                                        window.parent.location.reload();//修改成功后刷新父界面
+                                    }, 1000);
+                                    //加载层-风格
+                                } else {
+                                    layer.msg(data.msg, {icon: 5});
+                                }
+                            }
+                        });
+                        layer.close(index);
+                    });
+                    return false;
+                }
+            });
+        });
+
+        // 重置表格
+        $('#btn-resize').on('click', function () {
+            table.resize('commentId');
+        });
+
+        //字数限制
+        window.wordLeg = function (obj) {
+            var currleg = $(obj).val().length;
+            var length = $(obj).attr('maxlength');
+            if (currleg == length) {
+                layer.msg('已满');
+            }
+            $('.text_count').text(currleg);
+        }
+
+        /*data: {novelId:1},*/
+        function loadComment(){
+            $.ajax({
+                url: '/admin/comment/find/un_reply',
+                type:'GET',
+                dataType:'json',
+                success:function (data) {
+                    console.log(data);
+                    table.render({
+                        elem: '#commentList'
+                        , id: 'commentId'
+                        ,cellMinWidth: 80
+                        , data: data
+                        , page: {
+                            limit: 5,//指定每页显示条数
+                            limits: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],//每页条数的选择项
+                        }
+                        , count: data.length
+                        , cols: [
+                            [ //表头
+                                {field: 'user', title: '用户', align: 'center',templet: '<div>{{d.user.username}}</div>'},
+                                {field: 'content', title: '内容', align: 'center'},
+                                {field: 'createTime', title: '留言时间', align: 'center',
+                                    templet:"<div>{{layui.util.toDateString(d.createTime, 'yyyy-MM-dd HH:mm')}}</div>"},
+                                {field: 'novel', title: '书名', align: 'center',templet: '<div>{{d.novel.name}}</div>' },
+                                {fixed: 'right', title: '操作', align:'center', toolbar: '#barComment'}, //这里的toolbar值是模板元素的选择器
+                            ]
+                        ]
+                        ,done: function(res, curr, count){
+                        }
+                    });
+                }
+            })
+        }
+        loadComment();
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: htmlhead(~{::title},~{::style})">
+    <style>
+        .layui-table th {
+            text-align: center;
+        }
+        .layui-table-cell {
+            height: auto!important;
+            white-space: normal;
+        }
+    </style>
+    <title>书籍管理</title>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <!--头-->
+    <div th:replace="admin/fragments/head :: header"></div>
+    <div class="layui-body">
+        <div class="layui-row" style="margin: 1%">
+            <div class="layui-col-md4">
+                <div class="layui-btn-container">
+                    <button type="button" class="layui-btn layui-btn-radius" id="btn-add-novel">添加书籍</button>
+                    <button type="button" class="layui-btn layui-btn-radius" id="btn-add-category">添加分类</button>
+                    <button type="button" class="layui-btn layui-btn-radius" id="btn-resize">重置表格</button>
+                </div>
+            </div>
+            <div class="layui-col-md4 layui-col-md-offset4">
+                <form class="layui-form">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">分类</label>
+                        <div class="layui-input-inline" style="width: 100px;">
+                            <select name="category" lay-verify="" lay-search lay-filter="category" id="categoryList">
+                                <option value="0" selected>所有分类</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <table id="novelList" lay-filter="novel"></table>
+    </div>
+    <!--底部-->
+    <div th:replace="admin/fragments/footer :: footer"></div>
+</div>
+<div id="addNovel" style="display: none">
+    <form class="layui-form" action="" style="margin-top:20px" method="post">
+        <div class="layui-form-item">
+            <label class="layui-form-label">书名</label>
+            <div class="layui-input-inline">
+                <input type="text" name="name"  required  lay-verify="required" autocomplete="off" placeholder="请输入书名" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">作者</label>
+            <div class="layui-input-inline">
+                <input type="text" name="author"  required  lay-verify="required" autocomplete="off" placeholder="请输入作者" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">分类</label>
+            <div class="layui-input-inline" style="width: 100px;">
+                <select name="category" lay-verify="" lay-search lay-filter="" id="categoryList1">
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:40px">
+            <div class="layui-input-block">
+                <button class="layui-btn  layui-btn-submit " lay-submit="" lay-filter="addNovel">立即添加</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="addCategory" style="display: none">
+    <form class="layui-form" action="" style="margin-top:20px" method="post">
+        <div class="layui-form-item">
+            <label class="layui-form-label">分类名称</label>
+            <div class="layui-input-inline">
+                <input type="text" name="name"  required  lay-verify="required" autocomplete="off" placeholder="请输入分类名称" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:40px">
+            <div class="layui-input-block">
+                <button class="layui-btn  layui-btn-submit " lay-submit="" lay-filter="addCategory">立即添加</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script type="text/html" id="imgtmp">
+    <img src="/upload/images/{{d.coverUrl}}" style="width: 60px;height: 80px;"/>
+</script>
+<script type="text/html" id="barNovel">
+    <a class="layui-btn layui-btn-xs" lay-event="detail">查看</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+    layui.use(['table', 'form'], function () {
+        var table = layui.table,
+            form = layui.form,
+            $ = layui.jquery;
+
+        //监听工具条
+        table.on('tool(novel)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+            var data = obj.data; //获得当前行数据
+            var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+            var tr = obj.tr; //获得当前行 tr 的 DOM 对象（如果有的话）
+
+            if(layEvent === 'detail'){ //查看
+                //do somehing
+                layer.msg("查看书籍\t"+data.name);
+                window.location.href="/admin/novel/find/id?id=" +data.id;
+            } else if(layEvent === 'del'){ //删除
+                layer.confirm('真的删除“'+data.author + "”的 "+data.name+" 吗？", function(index){
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    layer.close(index);
+                    //向服务端发送删除指令
+                    deleteNovel(data.id);
+                });
+            }else if(layEvent === 'LAYTABLE_TIPS'){
+                layer.alert('Hi，头部工具栏扩展的右侧图标。');
+            }
+        });
+
+        // 删除书籍
+        function deleteNovel(novelId){
+            $.ajax({
+                url:'/admin/novel/update/status',
+                type:'POST',
+                dataType:'json',
+                data: {id:novelId},
+                success:function (data) {
+                    console.log(data);
+                    layer.msg("删除书籍成功");
+                }
+            })
+        }
+
+        form.on('select(category)', function(data){
+            console.log(data.value); //得到被选中的值
+            loadNovelByCategory(data.value);
+        });
+
+        //监听添加书籍表单提交
+        form.on('submit(addNovel)', function(data){
+            $.ajax({
+                url:'/admin/novel/add',
+                type:'POST',
+                dataType:'json',
+                data:{name: data.field.name,author: data.field.author,category: data.field.category},
+                success:function (data) {
+                    console.log(data);
+                    if(data.code==0){
+                        layer.closeAll('loading');
+                        layer.load(2);
+                        layer.msg(data.msg, {icon: 6});
+                        setTimeout(function(){
+                            window.parent.location.reload();//修改成功后刷新父界面
+                        }, 1000);
+                        //加载层-风格
+
+                    }else{
+                        layer.msg(data.msg, {icon: 5});
+                    }
+                }
+            })
+            return false;
+        });
+
+        //监听添加分类表单提交
+        form.on('submit(addCategory)', function(data){
+            $.ajax({
+                url:'/admin/category/add',
+                type:'POST',
+                dataType:'json',
+                data:{name:data.field.name},
+                success:function (data) {
+                    console.log(data);
+                    if(data.code==0){
+                        layer.closeAll('loading');
+                        layer.load(2);
+                        layer.msg(data.msg, {icon: 6});
+                        setTimeout(function(){
+                            window.parent.location.reload();//修改成功后刷新父界面
+                        }, 1000);
+                        //加载层-风格
+
+                    }else{
+                        layer.msg(data.msg, {icon: 5});
+                    }
+                }
+            })
+            return false;
+        });
+
+        //添加书籍
+        $('#btn-add-novel').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '添加书籍',
+                maxmin: true,
+                area: ['360px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#addNovel'),
+            });
+        });
+
+        //添加分类
+        $('#btn-add-category').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '添加分类',
+                maxmin: true,
+                area: ['400px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#addCategory'),
+            });
+        });
+
+        // 重置表格
+        $('#btn-resize').on('click', function () {
+            table.resize('commentId');
+        });
+
+        function loadCategory(){
+            $.ajax({
+                url:'/category/find/all',
+                type:'GET',
+                dataType:'json',
+                success:function (data) {
+                    console.log(data);
+                    $.each(data, function (index, obj) {
+                        console.log(obj);
+                        $("#categoryList").append(new Option(obj.name,obj.id));
+                        $("#categoryList1").append(new Option(obj.name,obj.id));
+                    });
+                    form.render('select');
+                }
+            })
+        }
+
+        function loadNovelByCategory(categoryId){
+            $.ajax({
+                url:'/novel/find/category',
+                type:'GET',
+                dataType:'json',
+                data:{categoryId: categoryId},
+                success:function (data) {
+                    console.log(data);
+                    table.render({
+                        elem: '#novelList'
+                        , id: 'commentId'
+                        ,cellMinWidth: 80
+                        , data: data
+                        , page: {
+                            limit: 5,//指定每页显示条数
+                            limits: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],//每页条数的选择项
+                        }
+                        , count: data.length
+                        , cols: [
+                            [ //表头
+                                {field: 'name', title: '书名', align: 'center'},
+                                {field: 'author', title: '作者', align: 'center'},
+                                {field: 'coverUrl', title: '封面', templet: "#imgtmp", align: 'center'},
+                                {field: 'createTime', title: '发布时间', align: 'center',
+                                    templet:"<div>{{layui.util.toDateString(d.createTime, 'yyyy-MM-dd')}}</div>"},
+                                {field: 'expireTime', title: '过期时间', align: 'center',
+                                    templet:"<div>{{layui.util.toDateString(d.expireTime, 'yyyy-MM-dd')}}</div>"},
+                                {field: 'category', title: '所属分类', align: 'center',templet: '<div>{{d.category.name}}</div>' },
+                                {fixed: 'right', title: '操作', align:'center', toolbar: '#barNovel'}, //这里的toolbar值是模板元素的选择器
+                            ]
+                        ]
+                        ,done: function(res, curr, count){
+                        }
+                    });
+                }
+            })
+        }
+        loadCategory();
+        loadNovelByCategory(0);
+    })
+</script>
+</body>
+</html>

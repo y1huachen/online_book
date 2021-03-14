@@ -1,0 +1,40 @@
+spring:
+  devtools:
+    restart:
+      enabled: true  #热部署
+      additional-paths: src/main/java,templates/** #源代码目录
+      additional-exclude: static/upload/**
+  servlet:
+    multipart:
+      max-request-size: 10MB # 上传文件总的最大值
+      max-file-size: 10MB # 单个文件的最大值
+  freemarker:
+    cache: false    #默认清除缓存
+  thymeleaf:
+    mode: html
+    encoding: utf-8
+    servlet:
+      content-type: text/html
+    cache: false
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    username: root
+    password: root
+    url: jdbc:mysql://localhost:3306/novel?useSSL=false
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  mvc:
+    static-path-pattern: /**
+  favicon:
+      enabled: true
+logging:
+  level:
+    com.lican.book: debug
+server:
+  max-http-header-size: 4048576
+file:
+  staticAccessPath: /upload/**
+  uploadFolder: E:/Study/IDEAWebCode/online_book/src/main/resources/static/upload/
+

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layin :: htmlhead(~{::title},~{::style},~{::link})">
+    <style>
+    </style>
+    <link rel="stylesheet" href="/css/novel1.css"/>
+    <title>在线看书城</title>
+</head>
+<body class="layui-layout-body">
+    <!--头-->
+    <div th:replace="fragments/head :: header"></div>
+    <div id="container">
+        <div id="main" style="margin-left: 100px">
+            <!-- 书籍分类栏 -->
+            <div class="layui-row">
+                <div class="layui-col-md9">
+                    <div class="book">
+                        <h3 class="lang width-left" id="book_lang"></h3>
+                        <div id="booklist">
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md3">
+                    <div class="rank">
+                        <div class="rank-list">
+                            <div class="newbookR">
+                                <h3 class="lang width-right">新书推荐</h3>
+                                <ul id="newBookList">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--底部-->
+    <div th:replace="fragments/footer :: footer"></div>
+    <script>
+        layui.use('form', function(){
+            var $ = layui.jquery;
+
+            var tags = ['','东方玄幻','都市生活','古典仙侠','未来世界'];
+            var categorys = ['全部'];
+
+            //各种基于事件的操作，下面会有进一步介绍
+
+            function loadCategory() {
+                $.ajax({
+                    url:'/category/find/all',
+                    type:'GET',
+                    dataType:'json',
+                    success:function (data) {
+                        console.log(data);
+                        $.each(data, function (index, obj) {
+                            var str = '<li class="layui-nav-item"><a href="javascript:void(0);" onclick=loadNovelByCategory('+obj.id+')>'+obj.name+'</a></li>';
+                            $("#categoryList").append(str);
+                            categorys.push(obj.name);
+                        });
+                        console.log(categorys);
+                        var s = '<li class="layui-nav-item"><a href="javascript:void(0);" onclick=loadNovelByCategory(0)>全部</a></li>'
+                        $("#categoryList").append(s);
+                        var flag =getQueryVariable("id");
+                        if(flag==false){
+                            window.loadNovelByCategory(0);
+                        }else{
+                            window.loadNovelByCategory(flag);
+                        }
+                    }
+                })
+            }
+
+            window.loadNovelByCategory = function (categoryId) {
+                $.ajax({
+                    url:'/novel/find/last/category',
+                    type:'GET',
+                    dataType:'json',
+                    data:{categoryId: categoryId},
+                    success:function (data) {
+                        console.log(data);
+                        $("#book_lang").text(categorys[categoryId]+"新书");
+                        $("#booklist").empty();
+                        for(i=0;i<data.length;i+=3){
+                            var s = '<div class="type-new-list"><ul>';
+                            var len = (i+3)>data.length?data.length:(i+3);
+                            for(j=i;j<len;j++){
+                                var chapter = data[j];
+                                var novel = chapter.novel;
+                                var tag = tags[novel.category.id];
+                                //var tag = tags[parseInt(Math.random()*tags.length,10)];
+                                s +='<li><div class="book-img"><a href="/novel/find/id?id='+novel.id+'"><img src="/upload/images/'+novel.coverUrl+'" class="book-img-size"/></a></div>' +
+                                    '<div class="book-info"><h4><a href="/novel/find/id?id='+novel.id+'">'+novel.name+'</a></h4>' +
+                                    '<p>'+novel.introduction+'</p>' +
+                                    '<p><a href="/read?novelId='+novel.id+'&number='+chapter.number+'" class="new-chapter">第'+chapter.chineseNumber+'章: '+chapter.name+'</a></p>' +
+                                    '<div class="state-box"><a href="#">'+novel.author+'</a>' +
+                                    '<span>'+tag+'</span></div></div></li>'
+                            }
+                            s+='</ul></div>'
+                            $("#booklist").append(s);
+                        }
+                    }
+                })
+                loadNewNovelByCategory(categoryId);
+            }
+
+            function loadNewNovelByCategory(categoryId) {
+                $.ajax({
+                    url:'/novel/find/new/category',
+                    type:'GET',
+                    dataType:'json',
+                    data:{categoryId: categoryId},
+                    success:function (data) {
+                        console.log(data);
+                        $("#newBookList").empty();
+                        var index,i=0;
+                        for(index=0;index<data.length;index++,i++){
+                            var s = '';
+                            var novel = data[index];
+                            if(novel.totalWords<=0){
+                                i--;
+                                continue;
+                            }
+                            if(i==0){
+                                var tag = tags[novel.category.id];
+                                s+='<li class="unfold">' +
+                                    '<div class="book-wrap">' +
+                                    '<div class="tuijianleft">' +
+                                    '<h3>NO.1</h3>' +
+                                    '<h4><a href="/novel/find/id?id='+novel.id+'">'+novel.name+'</a></h4>' +
+                                    '<p class="digital">本周最强</p>' +
+                                    '<p class="author">'+tag+'|'+novel.author+'</p>' +
+                                    '</div>' +
+                                    '<div class="tuijianright">' +
+                                    '<div class="bookcover">' +
+                                        '<img src="/upload/images/'+novel.coverUrl+'" class="bookcover-img"/>'+
+                                    '</div>' +
+                                    '</div>' +
+                                    '</div>' +
+                                    '</li>'
+                            }else{
+                                var num = 'num';
+                                if(i==1||i==2){
+                                    num+=(i+1);
+                                }
+                                s+='<li>' +
+                                    '<div class="num-box">' +
+                                    '<span class="'+num+'">'+(i+1)+'</span>' +
+                                    '</div>' +
+                                    '<div class="name-box">' +
+                                    '<a class="name" href="/novel/find/id?id='+novel.id+'">'+novel.name+'</a>' +
+                                    '</div>' +
+                                    '</li>'
+                            }
+                            $("#newBookList").append(s);
+                        }
+                    }
+                })
+            }
+
+
+            function getQueryVariable(variable)
+            {
+                var query = window.location.search.substring(1);
+                var vars = query.split("&");
+                for (var i=0;i<vars.length;i++) {
+                    var pair = vars[i].split("=");
+                    if(pair[0] == variable){return pair[1];}
+                }
+                return(false);
+            }
+
+            loadCategory();
+        });
+    </script>
+</body>
+</html>

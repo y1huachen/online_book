@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layin :: htmlhead(~{::title},~{::style},~{})">
+    <title id="title">阅读</title>
+    <style>
+        .layui-body{
+            left: 100px;
+        }
+        .word {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .font {
+            font-family: PingFangSC-Regular, Simsun;
+        }
+    </style>
+</head>
+<body class="layui-layout-body">
+<!--头-->
+<div th:replace="fragments/head :: header"></div>
+<div id="container">
+    <div id="main">
+        <div class="layui-body" style="margin: 5% 0% 5% 5%;">
+            <div class="layui-row" style="text-align: center;">
+                <div class="layui-col-md4">
+                    <div class="layui-row">
+                        <div class="layui-col-md2">
+                            <i class="layui-icon layui-icon-username" style="font-size: 30px; color: #1E9FFF;"></i>
+                        </div>
+                        <div class="layui-col-md2">
+                            <b><span th:text="${session.user.username}" style="font-size: 30px;">none</span></b>
+                        </div>
+                        <div class="layui-col-md4">
+                            <button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-danger" id="btn-password">修改密码</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md4">
+                    <p>用户简介</p>
+                    <br/>
+                    <p th:text="${session.user.introduction}"></p>
+                    <br/>
+                    <button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-normal" id="btn-introduction">编辑简介</button>
+                </div>
+                <div class="layui-col-md4">
+                    <img id="avatarImg" th:src="'/upload/images/'+${session.user.avatarUrl}" style="margin-bottom: 10px" width="100px" height="100px"/>
+                    <br/>
+                    <button class="layui-btn layui-btn-sm layui-btn-radius layui-btn-norma" id="btn-avatar">修改头像</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--底部-->
+<div th:replace="fragments/footer :: footer"></div>
+<div id="updateAvatar" style="display: none;margin:20px">
+    <button type="button" class="layui-btn layui-btn-danger" id="userAvatar"><i class="layui-icon"></i>上传图片</button>
+    <div class="layui-inline layui-word-aux">
+        2M
+    </div>
+    <div class="layui-upload-list">
+        <img class="layui-upload-img" id="avatar1">
+    </div>
+</div>
+<div id="updatePassword" style="display: none">
+    <form class="layui-form" action="" style="margin-top:20px" method="post">
+        <div class="layui-form-item">
+            <label class="layui-form-label">旧密码</label>
+            <div class="layui-input-inline">
+                <input type="text" name="password"  required  lay-verify="required" autocomplete="off" placeholder="请输入旧密码" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">新密码</label>
+            <div class="layui-input-inline">
+                <input type="text" name="newPassword"  required  lay-verify="required" autocomplete="off" placeholder="请输入新密码" class="layui-input">
+            </div>
+        </div>
+        <input type="hidden" th:value="${session.user.id}" name="id">
+        <div class="layui-form-item" style="margin-top:40px">
+            <div class="layui-input-block">
+                <button class="layui-btn  layui-btn-submit " lay-submit="" lay-filter="update">立即更新</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="updateIntroduction" style="display: none">
+    <form class="layui-form layui-form-pane" action="" style="margin:20px" method="post">
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">简介内容</label>
+            <div class="layui-input-block">
+                <textarea name="introduction" placeholder="请输入简介" class="layui-textarea" style="height: 200px"
+                          oninput="wordLeg(this);" maxlength="500" id="introduction"></textarea>
+                <div class="word">
+                    <span class="text_count">0</span>
+                    &nbsp;/&nbsp;
+                    <span class="num_count" id="numCount">500</span>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:10px">
+            <div class="layui-input-block">
+                <button class="layui-btn  layui-btn-submit " lay-submit="" lay-filter="updateInfo">立即修改</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    layui.use(['upload', 'form'], function(){
+        var $ = layui.jquery
+            ,form = layui.form
+            ,upload = layui.upload;
+
+        var userId = [[${session.user.id}]];
+        console.log(userId);
+
+        //修改头像
+        $('#btn-avatar').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '修改头像',
+                maxmin: true,
+                area: ['420px', '330px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#updateAvatar'),
+            });
+        });
+
+        //修改密码
+        $('#btn-password').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '修改密码',
+                maxmin: true,
+                area: ['360px', '330px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#updatePassword'),
+            });
+        });
+
+        //修改简介
+        $('#btn-introduction').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '编辑简介 不多于500字',
+                maxmin: true,
+                area: ['820px', '400px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#updateIntroduction'),
+            });
+        });
+
+        //字数限制
+        window.wordLeg = function (obj) {
+            var currleg = $(obj).val().length;
+            var length = $(obj).attr('maxlength');
+            if (currleg == length) {
+                layer.msg('已满');
+            }
+            $('.text_count').text(currleg);
+            showText();
+        }
+
+        //监听简介更新提交
+        form.on('submit(updateInfo)', function (data) {
+            $.ajax({
+                url: '/user/update/introduction',
+                type: 'POST',
+                dataType: 'json',
+                data: {id: userId, introduction: data.field.introduction},
+                success: function (data) {
+                    console.log(data);
+                    if (data.code == 0) {
+                        layer.closeAll('loading');
+                        layer.load(2);
+                        layer.msg(data.msg, {icon: 6});
+                        layer.msg("修改成功,请重新登陆");
+                        setTimeout(function () {
+                            window.location.href = '/logout/user';//修改成功重新登陆
+                        }, 1000);
+                        //加载层-风格
+                    } else {
+                        layer.msg(data.msg, {icon: 5});
+                    }
+                }
+            })
+            return false;
+        });
+
+        //监听提交
+        form.on('submit(update)', function(data){
+            $.ajax({
+                url:'/user/update/password',
+                type:'POST',
+                dataType:'json',
+                data:{id:data.field.id,password:data.field.password,newPassword:data.field.newPassword},
+                success:function (data) {
+                    console.log(data);
+                    if(data.code==0){
+                        layer.closeAll('loading');
+                        layer.load(2);
+                        layer.msg(data.msg, {icon: 6});
+                        layer.msg("修改成功,请重新登陆");
+                        setTimeout(function(){
+                            window.location.href = '/logout/user';//修改成功重新登陆
+                        }, 1000);
+                        //加载层-风格
+
+                    }else{
+                        layer.msg(data.msg, {icon: 5});
+                    }
+                }
+            })
+            return false;
+        });
+
+        //普通图片上传
+        var uploadInst = upload.render({
+            elem: '#userAvatar'
+            ,url: '/file/user/avatar' //改成您自己的上传接口
+            ,exts: 'jpg' //只允许上传图片文件
+            ,size: 2048 //限制文件大小，单位 KB
+            ,data: {userId: userId} //可选项。额外的参数，如：{id: 123, abc: 'xxx'}
+            ,before: function(obj){
+                //预读本地文件示例，不支持ie8
+                obj.preview(function(index, file, result){
+                    $('#avatar1').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res){
+                console.log(res);
+                //上传成功
+                if(res.code == 0){
+                    layer.msg("修改成功,请重新登陆");
+                    setTimeout(function(){
+                        window.location.href = '/logout/user';//修改成功重新登陆
+                    }, 1000);
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

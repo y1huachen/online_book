@@ -1,0 +1,280 @@
+
+#booklist h3 {
+    font-size: 22px;
+    line-height: 25px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #666;
+}
+
+.book li {
+    float: left;
+    list-style: none;
+}
+
+.lang {
+    margin-top: 5px;
+    font-family: "宋体";
+    font-weight: 400;
+    font-size: 22px;
+    line-height: 25px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #666;
+}
+
+.width-left{
+    margin-left: 80px;
+    width: 840px;
+}
+
+.width-right{
+    width: 200px;
+}
+
+.type-new-list {
+    /* width: 738px;
+    height: 138px; */
+    float: left;
+    padding: 0 50px;
+}
+
+.type-new-list li {
+    margin: 10px 30px;
+}
+
+.book-img {
+    width: 72px;
+    height: 96px;
+    margin-right: 12px;
+    background-color: darkred;
+    float: left;
+}
+
+.book-img-size {
+    width: 72px;
+    height: 96px;
+}
+
+.book-info {
+    width: 160px;
+    height: 96px;
+    float: left;
+}
+
+.book-info p {
+    overflow: hidden;
+    height: 20px;
+    margin-top: 5px;
+    margin-left: 5px;
+    color: #666;
+    display: block;
+    font-size: 14px;
+    font-family: PingFangSC-Regular, Simsun;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.book-info a {
+    text-decoration: none;
+    padding: 0 5px;
+    color: #1a1a1a;
+    font-size: 16px;
+}
+
+.book-info a:hover {
+    color: #ed4259;
+}
+
+.book-info .new-chapter {
+    overflow: hidden;
+    height: 20px;
+    color: #666;
+    display: block;
+    font-size: 13px;
+    padding-left: 0px;
+}
+
+.booklist .type-new-list li {
+    width: 228px;
+    height: 96px;
+    padding: 0 0px;
+}
+
+.state-box {
+    display: block;
+    width: 144px;
+    height: 20px;
+    font-size: 12px;
+    line-height: 18px;
+    margin-top: 5px;
+}
+
+.state-box span {
+    max-width: 66px;
+    height: 16px;
+    color: #bf2c24;
+    border: 1px solid #df9591;
+    float: right;
+    overflow: hidden;
+    padding: 0 3px;
+    /* text-align: center; */
+    border-radius: 1px;
+    font-family: "宋体";
+}
+
+.state-box a {
+    display: block;
+    overflow: hidden;
+    height: 18px;
+    margin-top: 0px;
+    padding-right: 10px;
+    color: #a6a6a6;
+    float: left;
+    font-family: PingFangSC-Regular, Simsun;
+    font-size: 12px;
+}
+
+.rank {
+
+    width: 300px;
+    height: 439px;
+    float: right;
+    position: relative;
+}
+
+.rank-list {
+    float: none;
+    margin-right: 0;
+    z-index: 1;
+    position: relative;
+    margin-top: 0px;
+}
+
+.rank-list .newbookR h3 .lang {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 25px;
+    overflow: hidden;
+    height: 24px;
+    padding-bottom: 4px;
+    color: #1a1a1a;
+    border-bottom: 1px solid #666;
+}
+
+.newbookR {
+    width: 300px;
+    height: 410px;
+}
+
+.rank-list .newbookR .unfold {
+    width: 300px;
+    height: 124px;
+    margin-bottom: -20px;
+}
+
+.rank-list .newbookR li {
+    /* clear: both; */
+    list-style: none;
+    margin-bottom: -10px;
+}
+
+
+.newbookR .unfold .tuijianleft {
+    width: 132px;
+    height: 92px;
+    display: inline-block;
+}
+
+.newbookR .unfold .tuijianleft h3 {
+    font: 700 14px/18px Arial;
+    width: 36px;
+    height: 18px;
+    margin-bottom: 3px;
+    text-align: center;
+    color: white;
+    background-color: #bf2c24;
+}
+
+.newbookR .unfold .tuijianleft .digital {
+    overflow: hidden;
+    height: 24px;
+    margin-bottom: 4px;
+    padding: 3px 0 0;
+    color: #bf2c24;
+    font-size: 16px;
+}
+
+.newbookR .unfold .tuijianleft .author {
+    color: #a6a6a6;
+    font-size: 12px;
+    font-family: PingFangSC-Regular, Simsun;
+}
+
+.newbookR .unfold .tuijianleft a {
+    color: #262626;
+}
+
+.newbookR .unfold .tuijianleft a:hover {
+    color: #ed4259;
+}
+
+.newbookR .unfold .tuijianright {
+    display: inline-block;
+    width: 120px;
+    height: 91px;
+}
+
+.bookcover {
+    margin-top: 8px;
+    margin-right: 8px;
+    background-color: red;
+    display: inline-block;
+}
+
+.bookcover-img {
+    width: 63px;
+    height: 84px;
+    float: left;
+}
+
+.num-box {
+    float: left;
+    width: 28px;
+    height: 32px;
+}
+
+.num-box span {
+    font: 700 14px/16px Arial;
+    display: inline-block;
+    overflow: hidden;
+    width: 16px;
+    height: 16px;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.name-box {
+    color: #1a1a1a;
+    height: 31px;
+    overflow: hidden;
+    width: 178px;
+    padding-left: 0px;
+    white-space: normal;
+    text-overflow: ellipsis;
+    display: inline-block;
+    font-size: 14px;
+    font-family: PingFangSC-Regular, Simsun;
+    border-top: 1px solid #e6e6e6;
+    padding-top: 7px;
+}
+.num2 {
+    background-color: #e67225;
+    color: white;
+}
+.num3 {
+    background-color: #e6bf25;
+    color: white;
+}
+
+.num {
+    color: #666;
+}

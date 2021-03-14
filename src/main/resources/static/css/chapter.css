@@ -1,0 +1,49 @@
+
+
+.catalog-content {
+    width: 990px;
+    height: 770px;
+    margin: auto;
+}
+
+
+.catalog-content .volume {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    margin-bottom: 40px;
+}
+
+
+.catalog-content .volume .cf {
+    width: 1050px;
+    height: 700px;
+    overflow: hidden;
+    display: block;
+}
+
+.catalog-content .volume li {
+    font: 14px/40px PingFangSC-Regular, '-apple-system', Simsun;
+    float: left;
+    overflow: hidden;
+    width: 290px;
+    height: 40px;
+    padding-right: 60px;
+    border-bottom: 1px solid #ebebeb;
+}
+
+.catalog-content .volume li a {
+    float: left;
+    width: 350px;
+    height: 40px;
+    overflow: hidden;
+    max-width: 240px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-decoration: none;
+    color: #262626;
+}
+
+.catalog-content .volume li a:hover {
+    color: #ed4259;
+}

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layin :: htmlhead(~{::title},~{::style},~{::link})">
+    <title>书籍信息</title>
+    <style>
+        .layui-input-block {
+            position: relative;
+        }
+
+        .word {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .font {
+            font-family: PingFangSC-Regular, Simsun;
+        }
+
+        .my-img {
+            width:40px;
+            height:40px;
+        }
+    </style>
+    <link rel="stylesheet" href="/css/chapter.css"/>
+</head>
+<body class="layui-layout-body">
+    <!--头-->
+    <div th:replace="fragments/head :: header"></div>
+    <div id="container">
+        <div id="main">
+            <div class="layui-body" style="margin: 5% 0% 5% 5%;" th:object="${novel}">
+                <div class="layui-row">
+                    <div class="layui-col-md2">
+                        <img id="avatarImg" th:src="'/upload/images/'+*{coverUrl}" style="margin-bottom: 10px" width="150px"
+                             height="200px"/>
+                    </div>
+                    <div class="layui-col-md4">
+                        <input type="hidden" th:value="*{id}" id="novelId">
+                        <input type="hidden" th:value="*{category.id}" id="categoryId">
+                        <input type="hidden" th:value="*{category.name}" id="categoryName">
+                        <input type="hidden" th:if="${session.user} eq null" name="userID" value="0"/>
+                        <input type="hidden" th:if="${session.user} ne null" name="userID" th:value="${session.user.id}"/>
+                        <h1 style="display: block;margin-top: 10px">
+                            <span th:text="*{name}">none</span>
+                            <span th:text="${novel.author}+' 著'" style="font-size: 14px;">none</span>
+                        </h1>
+                        <br/>
+                        <div style="margin-bottom: 15px">
+                            <span th:text="*{totalWords/10000.0}" style="font-size: 20px;">none</span> <span
+                                style="font-size: 12px">万字</span>
+                            <i style="color: white;margin: 0 5px;">|</i>
+                            <span th:text="*{countComments}" style="font-size: 20px;">none</span> <span style="font-size: 12px">条评论</span>
+                        </div>
+                        <div style="margin-bottom: 10px">
+                            发布时间：<span th:text="${#dates.format(novel.createTime, 'yyyy-MM-dd HH:mm')} "
+                                       class="font">none</span>
+                        </div>
+                        <div th:if="${chapter!=null}" th:object="${chapter}" style="margin-bottom: 15px">
+                                    <a th:href="'/read?novelId='+*{novel.id}+'&number='+*{number}" style="color:#2972cc">第<span th:text="*{chineseNumber}"></span>章&nbsp;&nbsp;<span
+                                            th:text="*{name}"></span></a>
+                        </div>
+                        <div class="layui-btn-container">
+                            <button type="button" class="layui-btn layui-btn-radius layui-btn-sm" id="btn-add">添加留言</button>
+                            <button type="button" class="layui-btn layui-btn-radius layui-btn-sm layui-btn-normal"
+                                    id="btn-download">下载本书
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-row">
+                    <div class="layui-col-md6">
+                        <div class="layui-tab layui-tab-brief">
+                            <ul class="layui-tab-title">
+                                <li class="layui-this">作品简介</li>
+                                <li>目录</li>
+                            </ul>
+                            <div class="layui-tab-content">
+                                <div class="layui-tab-item layui-show">
+                                    <p th:utext="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(novel.introduction),'\n','&lt;br/&gt;'))}"
+                                       style="overflow: auto;text-indent:2em;line-height: 20px;" class="font">none</p>
+                                    <br/>
+                                    <div>
+                                        <hr class="layui-bg-green">
+                                        <p>留言列表</p>
+                                        <br/>
+                                        <div style="border: 1px solid #5FB878;padding: 15px">
+                                        <ul>
+                                            <li th:each="comment : ${comments}">
+                                                <div>
+                                                    <div style="float: left;margin-right: 10px">
+                                                        <img th:src="'/upload/images/'+${comment.user.avatarUrl}" class="my-img"/>
+                                                    </div>
+                                                    <div>
+                                                        <p style="margin-bottom: 5px" th:text="${comment.user.username}"></p>
+                                                        <p th:text="${#dates.format(comment.createTime, 'yyyy-MM-dd HH:mm')} "
+                                                           class="font"></p>
+                                                    </div>
+                                                    <fieldset class="layui-elem-field">
+                                                        <div class="layui-field-box">
+                                                            <p th:text="${comment.content}"></p>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+                                                <div style="margin-left: 50px" th:if="${comment.isReply!=0}">
+                                                    <div style="float: left;margin-right: 10px">
+                                                        <img th:src="'/upload/images/'+${comment.admin.avatarUrl}" class="my-img"/>
+                                                    </div>
+                                                    <div>
+                                                        <p style="margin-bottom: 5px;color: red" th:text="${comment.admin.name}+' 管理员'"></p>
+                                                        <p th:text="${#dates.format(comment.replyTime, 'yyyy-MM-dd HH:mm')} "
+                                                           class="font"></p>
+                                                    </div>
+                                                    <fieldset class="layui-elem-field">
+                                                        <div class="layui-field-box">
+                                                            <p th:if="${comment.isReply==2}">忽略了该留言</p>
+                                                            <p th:if="${comment.isReply==1}" th:text="${comment.replyContent}"></p>
+                                                        </div>
+                                                    </fieldset>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="layui-tab-item">
+                                    <div class="catalog-content" style="display:block">
+                                        <div class="volume-wrap">
+                                            <div class="volume">
+                                                <ul class="cf">
+                                                    <li th:each="chapter : ${chapters}">
+                                                        <a th:href="'/read?novelId='+${chapter.novel.id}+'&number='+${chapter.number}"
+                                                         th:text="'第'+${chapter.chineseNumber}+'章: '+${chapter.name}"></a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--底部-->
+    <div th:replace="fragments/footer :: footer"></div>
+    <div id="addComment" style="display: none">
+        <form class="layui-form layui-form-pane" action="" style="margin:20px" method="post">
+            <div class="layui-form-item layui-form-text" style="margin-right: 10px">
+                <label class="layui-form-label">留言</label>
+                <div class="layui-input-block">
+                    <textarea name="content" placeholder="请输入留言" class="layui-textarea" rows="10"
+                              oninput="wordLeg(this);" maxlength="500" id="content"></textarea>
+                    <div class="word">
+                        <span class="text_count" id="numCount">0</span>
+                        &nbsp;/&nbsp;
+                        <span class="num_count">500</span>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+<script>
+    function showText() {
+        var s = document.getElementById("show");
+        var t = document.getElementById("content");
+        var l = document.getElementById("length");
+        s.innerText = t.value;
+        l.innerText = t.value.length;
+    }
+
+    layui.use(['upload', 'form'], function () {
+        var $ = layui.jquery;
+
+        var novelId = $("#novelId").val();
+        console.log(novelId);
+        var id = $("#categoryId").val();
+        console.log(id);
+        var name = $("#categoryName").val();
+        console.log(name);
+
+        var nName = '[[${novel.name}]]';
+
+        var s = '<li class="layui-nav-item"><a href="/index?id='+id+'">'+name+'</a></li>';
+        s += '<li class="layui-nav-item"><a href="#">'+nName+'</a></li>';
+        $("#categoryList").append(s);
+
+        // 下载本书
+        $('#btn-download').on('click', function () {
+            layer.confirm('确定下载吗？', {icon: 3, title: '提示'}, function (index) {
+                //do something
+                window.location.href="/novel/download/id?novelId="+novelId;
+                layer.close(index);
+                var msg = layer.msg('正在下载《'+nName+'》', {
+                    time: false
+                });
+                getDownloadStatus(msg);
+            });
+        });
+
+        //添加留言
+        $('#btn-add').on('click', function () {
+            var userId = $('input[name="userID"]').val();
+            if(userId==0){
+                window.location.href = "/login/user?msg=please login first";
+                return false;
+            }
+            layer.open({
+                type: 1,
+                title: '添加留言',
+                maxmin: true,
+                area: ['800px','400px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#addComment'),
+                btn: ['清空', '立即留言'], //可以无限个按钮
+                btn1: function (index, layero) {
+                    $("#content").val("");
+                    $("#numCount").text("0");
+                },
+                btn2: function (index, layero) { // 添加章节
+                    var content = $("#content").val();
+                    var lens = $("#content").val().length;
+                    if (lens == 0) {
+                        layer.msg('留言内容不能为空！');
+                        return false;
+                    }
+                    layer.confirm('确定留言吗？', {icon: 3, title: '提示'}, function (index) {
+                        //do something
+                        layer.msg("确定");
+                        $.ajax({
+                            url: '/comment/add',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {novel: novelId, user: userId, content: content},
+                            success: function (data) {
+                                console.log(data);
+                                if (data.code == 0) {
+                                    layer.closeAll('loading');
+                                    layer.load(2);
+                                    layer.msg(data.msg, {icon: 6});
+                                    setTimeout(function () {
+                                        window.parent.location.reload();//修改成功后刷新父界面
+                                    }, 1000);
+                                    //加载层-风格
+                                } else {
+                                    layer.msg(data.msg, {icon: 5});
+                                }
+                            }
+                        });
+                        layer.close(index);
+                    });
+                    return false;
+                }
+            });
+        });
+
+        //字数限制
+        window.wordLeg = function (obj) {
+            var currleg = $(obj).val().length;
+            var length = $(obj).attr('maxlength');
+            if (currleg == length) {
+                layer.msg('已满');
+            }
+            $('.text_count').text(currleg);
+            showText();
+        }
+
+        function getDownloadStatus(index) {
+            $.ajax({
+                url: '/novel/download/status',
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data);
+                    if (data.code == 0) {
+                        if(data.data==true){
+                            layer.close(index);
+                            // 下载结束
+                            layer.msg('下载已完成');
+                            resetDownloadStatus();
+                        }else{
+                            setTimeout(getDownloadStatus, 1000);
+                        }
+                    } else {
+                        layer.msg(data.msg, {icon: 5});
+                    }
+                }
+            });
+        }
+
+        function resetDownloadStatus() {
+            $.ajax({
+                url: '/novel/download/reset',
+                type: 'GET'
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layout :: htmlhead(~{::title},~{::style})">
+    <title>书籍信息</title>
+    <style>
+        .layui-input-block {
+            position: relative;
+        }
+
+        .word {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .font {
+            font-family: PingFangSC-Regular, Simsun;
+        }
+
+        .bg {
+            background: url('/images/background/theme_bg1.png') repeat;
+        }
+    </style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+    <!--头-->
+    <div th:replace="admin/fragments/head :: header"></div>
+    <div class="layui-body" style="margin: 5%;">
+        <div class="layui-row" th:object="${novel}">
+            <div class="layui-col-md2">
+                <img id="avatarImg" th:src="'/upload/images/'+*{coverUrl}" style="margin-bottom: 10px" width="150px"
+                     height="200px"/>
+            </div>
+            <div class="layui-col-md4">
+                <input type="hidden" th:value="*{id}" id="novelId">
+                <h1 style="display: block;margin-top: 10px">
+                    <span th:text="*{name}">none</span>
+                    <span th:text="${novel.author}+' 著'" style="font-size: 14px;">none</span>
+                </h1>
+                <br/>
+                <div style="margin-bottom: 15px">
+                    <span th:text="*{totalWords/10000.0}" style="font-size: 20px;">none</span> <span
+                        style="font-size: 12px">万字</span>
+                    <i style="color: white;margin: 0 5px;">|</i>
+                    <span th:text="*{countComments}" style="font-size: 20px;">none</span> <span style="font-size: 12px">条评论</span>
+                </div>
+                <div style="margin-bottom: 10px">
+                    发布时间：<span th:text="${#dates.format(novel.createTime, 'yyyy-MM-dd HH:mm')} "
+                               class="font">none</span>
+                </div>
+                <div style="margin-bottom: 15px">
+                    过期时间：<span th:text="${#dates.format(novel.expireTime, 'yyyy-MM-dd HH:mm')}" class="font">none</span>
+                </div>
+                <div class="layui-btn-container">
+                    <button type="button" class="layui-btn layui-btn-radius layui-btn-danger layui-btn-sm"
+                            id="btn-cover">上传封面
+                    </button>
+                    <button type="button" class="layui-btn layui-btn-radius layui-btn-sm" id="btn-chapter">添加章节</button>
+                    <button type="button" class="layui-btn layui-btn-radius layui-btn-normal layui-btn-sm"
+                            id="btn-introduction">编辑简介
+                    </button>
+                    <button type="button" class="layui-btn layui-btn-radius layui-btn-sm layui-btn-primary"
+                            id="btn-download">下载本书
+                    </button>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div style="margin: 30px">
+                    <h3>简介</h3>
+                    <p th:utext="${#strings.unescapeJava(#strings.replace(#strings.escapeJava(novel.introduction),'\n','&lt;br/&gt;'))}"
+                       style="overflow: auto;height: 150px;text-indent:2em;line-height: 20px;" class="font">none</p>
+                </div>
+            </div>
+        </div>
+        <div th:if="${chapter!=null}">
+            <div class="layui-row" th:object="${chapter}">
+                <div class="layui-col-md2">
+                    最后更新&nbsp;&nbsp;
+                    <span th:text="${#dates.format(chapter.createTime, 'yyyy-MM-dd')}" class="font">none</span>
+                </div>
+                <div class="layui-col-md2">
+                    <a th:href="'/read?novelId='+${chapter.novel.id}+'&number='+${chapter.number}" style="color:#2972cc">第<span th:text="*{chineseNumber}"></span>章&nbsp;&nbsp;<span
+                            th:text="*{name}"></span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--底部-->
+    <div th:replace="admin/fragments/footer :: footer"></div>
+</div>
+<div id="updateCover" style="display: none;margin:20px">
+    <button type="button" class="layui-btn layui-btn-danger" id="novelCover"><i class="layui-icon"></i>上传封面</button>
+    <div class="layui-inline layui-word-aux">
+        2M
+    </div>
+    <div class="layui-upload-list">
+        <img class="layui-upload-img" id="cover1">
+    </div>
+</div>
+<div id="updateIntroduction" style="display: none">
+    <form class="layui-form layui-form-pane" action="" style="margin:20px" method="post">
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">简介内容</label>
+            <div class="layui-input-block">
+                <textarea name="introduction" placeholder="请输入简介" class="layui-textarea" style="height: 200px"
+                          oninput="wordLeg(this);" maxlength="500" id="introduction"></textarea>
+                <div class="word">
+                    <span class="text_count">0</span>
+                    &nbsp;/&nbsp;
+                    <span class="num_count" id="numCount">500</span>
+                </div>
+            </div>
+        </div>
+        <div class="layui-form-item" style="margin-top:10px">
+            <div class="layui-input-block">
+                <button class="layui-btn  layui-btn-submit " lay-submit="" lay-filter="update">立即修改</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="addChapter" style="display: none;">
+    <div class="layui-row">
+        <div class="layui-col-md6">
+            <form class="layui-form layui-form-pane" action="" style="margin:20px" method="post">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">章节名称</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="cName" id="cName" required lay-verify="required" autocomplete="off"
+                               placeholder="请输入章节名称" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item layui-form-text" style="margin-right: 10px">
+                    <label class="layui-form-label">章节内容</label>
+                    <div class="layui-input-block">
+                    <textarea name="content" placeholder="请输入内容" class="layui-textarea" rows="20"
+                              oninput="wordLeg(this);" maxlength="10000" id="content"></textarea>
+                        <div class="word">
+                            <span class="text_count" id="numCount1">0</span>
+                            &nbsp;/&nbsp;
+                            <span class="num_count">10000</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item" style="margin-top:10px">
+                    <div class="layui-input-block">
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        <span id="length">0</span><span>字</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="layui-col-md6">
+            <div style="margin: 20px">
+                <p>章节预览</p>
+                <hr class="layui-bg-black">
+                <br/>
+                <pre id="show"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function showText() {
+        var s = document.getElementById("show");
+        var t = document.getElementById("content");
+        var l = document.getElementById("length");
+        s.innerText = t.value;
+        l.innerText = t.value.length;
+    }
+
+    layui.use(['upload', 'form'], function () {
+        var $ = layui.jquery
+            , form = layui.form
+            , upload = layui.upload;
+
+        var novelId = $("#novelId").val();
+        console.log(novelId);
+
+        // 上传封面
+        $('#btn-cover').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '上传封面',
+                maxmin: true,
+                area: ['420px', '330px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#updateCover'),
+            });
+        });
+
+        // 下载本书
+        $('#btn-download').on('click', function () {
+            layer.confirm('确定下载吗？', {icon: 3, title: '提示'}, function (index) {
+                //do something
+                window.location.href="/novel/download/id?novelId="+novelId;
+                layer.close(index);
+            });
+        });
+
+        //修改简介
+        $('#btn-introduction').on('click', function () {
+            layer.open({
+                type: 1,
+                title: '编辑简介 不多于500字',
+                maxmin: true,
+                area: ['820px', '400px'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#updateIntroduction'),
+            });
+        });
+
+        //添加章节
+        $('#btn-chapter').on('click', function () {
+            var chapter = layer.open({
+                type: 1,
+                title: '添加章节',
+                skin: 'bg',
+                maxmin: false,
+                area: ['1000px', '100%'],
+                shadeClose: false, //点击遮罩关闭
+                content: $('#addChapter'),
+                btn: ['清空', '立即添加'], //可以无限个按钮
+                btn1: function (index, layero) {
+                    $("#content").val("");
+                    $("#show").text("");
+                    $("#numCount1").text("0");
+                    $("#length").text("0");
+                },
+                btn2: function (index, layero) { // 添加章节
+                    var content = $("#content").val();
+                    var name = $("#cName").val();
+                    var lens = $("#content").val().length;
+                    if (lens == 0) {
+                        layer.msg('章节内容不能为空！');
+                        return false;
+                    }
+                    layer.confirm('确定添加吗，当前 ' + lens + ' 字', {icon: 3, title: '提示'}, function (index) {
+                        //do something
+                        layer.msg("确定");
+                        $.ajax({
+                            url: '/admin/chapter/add',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {novel: novelId, name: name, content: content, words: lens},
+                            success: function (data) {
+                                console.log(data);
+                                if (data.code == 0) {
+                                    layer.closeAll('loading');
+                                    layer.load(2);
+                                    layer.msg(data.msg, {icon: 6});
+                                    setTimeout(function () {
+                                        window.parent.location.reload();//修改成功后刷新父界面
+                                    }, 1000);
+                                    //加载层-风格
+                                } else {
+                                    layer.msg(data.msg, {icon: 5});
+                                }
+                            }
+                        })
+                        layer.close(index);
+                    });
+                    return false;
+                }
+            });
+            layer.full(chapter);
+        });
+
+        //字数限制
+        window.wordLeg = function (obj) {
+            var currleg = $(obj).val().length;
+            var length = $(obj).attr('maxlength');
+            if (currleg == length) {
+                layer.msg('已满');
+            }
+            $('.text_count').text(currleg);
+            showText();
+        }
+
+        //监听简介更新提交
+        form.on('submit(update)', function (data) {
+            $.ajax({
+                url: '/admin/novel/update/introduction',
+                type: 'POST',
+                dataType: 'json',
+                data: {id: novelId, introduction: data.field.introduction},
+                success: function (data) {
+                    console.log(data);
+                    if (data.code == 0) {
+                        layer.closeAll('loading');
+                        layer.load(2);
+                        layer.msg(data.msg, {icon: 6});
+                        setTimeout(function () {
+                            window.parent.location.reload();//修改成功后刷新父界面
+                        }, 1000);
+                        //加载层-风格
+                    } else {
+                        layer.msg(data.msg, {icon: 5});
+                    }
+                }
+            })
+            return false;
+        });
+
+        //普通图片上传
+        var uploadInst = upload.render({
+            elem: '#novelCover'
+            , url: '/file/novel/cover' //改成您自己的上传接口
+            , exts: 'png' //只允许上传图片文件
+            , size: 2048 //限制文件大小，单位 KB
+            , data: {novelId: novelId} //可选项。额外的参数，如：{id: 123, abc: 'xxx'}
+            , before: function (obj) {
+                //预读本地文件示例，不支持ie8
+                obj.preview(function (index, file, result) {
+                    $('#cover1').attr('src', result); //图片链接（base64）
+                });
+            }
+            , done: function (res) {
+                console.log(res);
+                //上传成功
+                if (res.code == 0) {
+                    layer.msg("修改成功,2S后自动关闭，如未改变封面请手动刷新");
+                    setTimeout(function () {
+                        window.parent.location.reload();//修改成功后刷新父界面
+                    }, 2000);
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

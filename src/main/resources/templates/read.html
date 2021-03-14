@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="layin :: htmlhead(~{::title},~{::style},~{})">
+    <title id="title">阅读</title>
+    <style>
+        .layui-body{
+            left: 100px;
+        }
+
+        .bg {
+            background: url('/images/background/theme_bg1.png') repeat;
+        }
+    </style>
+</head>
+<body class="layui-layout-body">
+<!--头-->
+<div th:replace="fragments/head :: header"></div>
+<div id="container" class="bg">
+    <div id="main">
+        <div class="layui-body" style="margin: 5% 0% 5% 5%;">
+            <div style="margin-right: 150px;">
+                <pre id="content" style="line-height: 24px"></pre>
+                <div style="text-align: center">
+                    <span id="pre">上一章</span>
+                    <span id="chapters">目录</span>
+                    <span id="next">下一章</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<!--底部-->
+<div th:replace="fragments/footer :: footer"></div>
+<script>
+    layui.use('util', function () {
+        var $ = layui.$;
+
+        var obj;
+        var chapter;
+        var novel;
+        var category;
+        var maxNumber;
+
+        window.loadChapter = function(novelId,number) {
+            $.ajax({
+                url:'/chapter/find/number',
+                type:'GET',
+                dataType:'json',
+                data:{novelId:novelId,number:number},
+                success:function (data) {
+                    console.log(data);
+                    obj = data.content;
+                    maxNumber = data.maxNumber;
+                    init();
+                }
+            });
+        }
+
+        function parseData() {
+            var id =getQueryVariable("novelId");
+            var number = getQueryVariable("number");
+            if(number==false){
+                loadChapter(id,1);
+            }else{
+                loadChapter(id,number);
+            }
+        }
+
+        function init() {
+            chapter = obj.chapter;
+            novel = chapter.novel;
+            category = novel.category;
+            console.log(chapter);
+            console.log(novel);
+            console.log(category);
+            $("#title").text("第"+chapter.chineseNumber+"章"+" "+chapter.name);
+            var s = '<li class="layui-nav-item"><a href="/index?id='+category.id+'">'+category.name+'</a></li>';
+            s += '<li class="layui-nav-item"><a href="/novel/find/id?id='+novel.id+'">'+novel.name+'</a></li>';
+            s += '<li class="layui-nav-item"><a href="#">'+chapter.name+'</a></li>';
+            $("#categoryList").append(s);
+            $("#content").append(obj.content);
+
+            var pre = '<a href="/read?novelId='+novel.id+'&number='+(chapter.number-1)+'">上一章</a>';
+            var next = '<a href="/read?novelId='+novel.id+'&number='+(chapter.number+1)+'">下一章</a>';
+
+            $("#pre").html(pre);
+            $("#next").html(next);
+            if(chapter.number<=1){
+                $("#pre").text("没有了");
+            }
+            if(chapter.number>=maxNumber){
+                $("#next").text("没有了");
+            }
+            var chapters = '<a href="/novel/find/id?id='+novel.id+'">目录</a>';
+            $("#chapters").html(chapters);
+        }
+
+        function getQueryVariable(variable)
+        {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                var pair = vars[i].split("=");
+                if(pair[0] == variable){return pair[1];}
+            }
+            return(false);
+        }
+        parseData();
+    });
+</script>
+</body>
+</html>
